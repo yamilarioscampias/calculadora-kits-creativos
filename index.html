@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Calculadora de costos · Kits Creativos</title>
+<style>
+:root{--bg:#fff7f3;--card:#fff;--ink:#3a2e35;--dim:#8a7a82;--acc:#e88aa8;--acc2:#8fc9c0;--line:#f0e2e6}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+.w{max-width:480px;margin:0 auto;padding:18px 16px 40px}
+h1{font-size:22px;margin:4px 0 2px}
+.sub{color:var(--dim);font-size:14px;margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.card h2{font-size:15px;margin:0 0 10px}
+label{display:block;font-size:13px;color:var(--dim);margin:8px 0 4px}
+select,input{width:100%;font-size:16px;padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+.row{display:grid;grid-template-columns:1fr 92px 92px 30px;gap:6px;align-items:center;margin-bottom:6px}
+.row input{padding:8px;font-size:15px}
+.hdr{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.05em}
+.x{border:0;background:none;font-size:18px;color:var(--dim);cursor:pointer}
+.add{border:1px dashed var(--acc);color:var(--acc);background:none;border-radius:10px;padding:8px;width:100%;font-weight:700;cursor:pointer}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.res{background:linear-gradient(135deg,#ffe3ec,#e3f5f2)}
+.big{font-size:30px;font-weight:800;margin:2px 0}
+.lin{display:flex;justify-content:space-between;font-size:14px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,.06)}
+.lin:last-child{border:0}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:7px 4px;text-align:right;border-bottom:1px solid rgba(0,0,0,.06)}
+td:first-child,th:first-child{text-align:left}
+.note{font-size:12px;color:var(--dim);margin-top:8px}
+</style>
+</head>
+<body>
+<div class="w">
+  <h1>Calculadora de costos</h1>
+  <p class="sub">Elegí tu kit, cargá lo que te salen los materiales y te digo cuánto cobrar.</p>
+
+  <div class="card">
+    <h2>1 · ¿Qué kit vas a armar?</h2>
+    <select id="kit"></select>
+  </div>
+
+  <div class="card">
+    <h2>2 · Materiales y packaging</h2>
+    <div class="row hdr"><span>Material</span><span>Pagaste $</span><span>Te rinde (kits)</span><span></span></div>
+    <div id="mats"></div>
+    <button class="add" id="addm">+ Agregar material</button>
+    <p class="note">"Te rinde": para cuántos kits te alcanza lo que compraste. Ej.: un pote de pintura de $3.000 que te alcanza para 15 kits.</p>
+  </div>
+
+  <div class="card">
+    <h2>3 · Tu tiempo y tu ganancia</h2>
+    <div class="two">
+      <div><label>Minutos por kit</label><input id="min" type="number" min="0" value="12" inputmode="numeric"></div>
+      <div><label>Tu hora vale $</label><input id="hora" type="number" min="0" value="4000" inputmode="numeric"></div>
+    </div>
+    <label>Ganancia que querés (%)</label>
+    <input id="gan" type="number" min="0" value="60" inputmode="numeric">
+  </div>
+
+  <div class="card res">
+    <h2>Resultado</h2>
+    <div class="lin"><span>Materiales por kit</span><b id="rMat"></b></div>
+    <div class="lin"><span>Tu tiempo por kit</span><b id="rTie"></b></div>
+    <div class="lin"><span>Costo total por kit</span><b id="rCos"></b></div>
+    <p class="note" style="margin:12px 0 0">Precio sugerido por kit</p>
+    <div class="big" id="rPre"></div>
+    <table style="margin-top:10px">
+      <thead><tr><th>Combo</th><th>Descuento</th><th>Precio total</th><th>Te queda</th></tr></thead>
+      <tbody id="combos"></tbody>
+    </table>
+    <p class="note">Los valores que ves al abrir son un ejemplo. Cambialos por tus precios reales.</p>
+  </div>
+</div>
+<script>
+const KITS={
+ "Kit de yeso para pintar":[["Figuras de yeso (x4)",1200,1],["Pinturas acrílicas (x3)",4500,15],["Pincel",250,1],["Bolsa + cartoncito",180,1]],
+ "Tote bag con apliques":[["Tote bag de lienzo",2200,1],["Apliques DTF",900,1],["Bolsa + cartoncito",180,1]],
+ "Kit bedazzle":[["Base (vincha, llavero o espejito)",900,1],["Strass y gemas",3500,20],["Pegamento",2500,25],["Bolsa + cartoncito",180,1]],
+ "Cuadrito para pintar":[["Bastidor chico",1100,1],["Pinturas acrílicas (x3)",4500,15],["Pincel",250,1],["Bolsa + cartoncito",180,1]],
+ "Kit slime":[["Plasticola",3000,6],["Activador",2500,20],["Brillos y charms",2000,20],["Pote + etiqueta",350,1]],
+ "Sticker bar":[["Planchas de stickers (x3)",900,1],["Cuaderno o base",1300,1],["Bolsa + cartoncito",180,1]]
+};
+const $=id=>document.getElementById(id), fmt=n=>"$"+Math.round(n).toLocaleString("es-AR");
+const sel=$("kit");Object.keys(KITS).forEach(k=>sel.add(new Option(k,k)));
+function row(n="",p="",r=1){const d=document.createElement("div");d.className="row";
+ d.innerHTML=`<input value="${n}" placeholder="Material"><input type="number" min="0" value="${p}" inputmode="numeric"><input type="number" min="1" value="${r}" inputmode="numeric"><button class="x" title="Sacar">×</button>`;
+ d.querySelector(".x").onclick=()=>{d.remove();calc()};d.querySelectorAll("input").forEach(i=>i.oninput=calc);$("mats").appendChild(d)}
+function load(){$("mats").innerHTML="";KITS[sel.value].forEach(m=>row(...m));calc()}
+function calc(){let mat=0;$("mats").querySelectorAll(".row").forEach(r=>{const i=r.querySelectorAll("input");const p=+i[1].value||0,re=Math.max(1,+i[2].value||1);mat+=p/re});
+ const tie=(+$("min").value||0)/60*(+$("hora").value||0),cos=mat+tie,pre=cos*(1+(+$("gan").value||0)/100);
+ $("rMat").textContent=fmt(mat);$("rTie").textContent=fmt(tie);$("rCos").textContent=fmt(cos);$("rPre").textContent=fmt(pre);
+ $("combos").innerHTML=[[10,.10],[20,.15],[30,.20]].map(([q,d])=>{const t=pre*q*(1-d);return `<tr><td>x${q}</td><td>${d*100}%</td><td>${fmt(t)}</td><td>${fmt(t-cos*q)}</td></tr>`}).join("")}
+sel.onchange=load;["min","hora","gan"].forEach(i=>$(i).oninput=calc);$("addm").onclick=()=>row();load();
+</script>
+</body>
+</html>
